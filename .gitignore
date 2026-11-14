@@ -1,0 +1,15 @@
+# Ambientes virtuais e cache
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Variáveis de ambiente (NUNCA subir para o GitHub)
+.env
+
+# Banco de dados local do Docker
+pgdata/
+
+# Arquivos do SO
+.DS_Store
