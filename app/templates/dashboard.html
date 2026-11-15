@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Dashboard de Vagas</h1>
+
+    {% if vagas %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-100 text-gray-700">
+                <tr>
+                    <th class="px-4 py-2">Empresa</th>
+                    <th class="px-4 py-2">Título</th>
+                    <th class="px-4 py-2">Data</th>
+                    <th class="px-4 py-2">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for item in vagas %}
+                {% set vaga = item.vaga %}
+                {% set adaptacao = item.adaptacao %}
+                <tr>
+                    <td class="px-4 py-2">{{ vaga.vaga_data.vaga.empresa }}</td>
+                    <td class="px-4 py-2">{{ vaga.vaga_data.vaga.titulo_vaga }}</td>
+                    <td class="px-4 py-2">{{ vaga.data_criacao.strftime('%d/%m/%Y') if vaga.data_criacao else '-' }}</td>
+                    <td class="px-4 py-2">
+                        <div id="acao-{{ vaga.id }}">
+                            {% if adaptacao %}
+                                <a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
+                                    Baixar Currículo/Carta
+                                </a>
+                                {% if vaga.url_original %}
+                                    <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" class="inline-block ml-2 text-blue-600 hover:underline">
+                                        Vaga original
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <button
+                                    hx-post="/gerar-adaptacao/{{ vaga.id }}"
+                                    hx-target="#acao-{{ vaga.id }}"
+                                    hx-swap="innerHTML"
+                                    class="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
+                                >
+                                    Gerar Currículo Ideal
+                                </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-gray-500">
+        Nenhuma vaga analisada ainda.
+        <a href="/" class="text-blue-600 hover:underline">Analisar uma vaga</a>.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

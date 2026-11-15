@@ -2,7 +2,14 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 psycopg2-binary
+psycopg[binary]
 pydantic-settings
 httpx
 jinja2
 python-multipart
+authlib
+itsdangerous
+passlib[bcrypt]
+bcrypt==4.0.1
+PyPDF2
+python-docx
