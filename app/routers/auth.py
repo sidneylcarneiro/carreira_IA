@@ -28,20 +28,30 @@ def render(template_name: str, request: Request, **context) -> HTMLResponse:
     return template.render(**context)
 
 
-# --- Google OAuth (estrutural; ativado apenas com credenciais configuradas) ---
+# --- Google OAuth (login social) ---
+CONF_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
 oauth = OAuth()
 oauth.register(
     name="google",
     client_id=settings.GOOGLE_CLIENT_ID,
     client_secret=settings.GOOGLE_CLIENT_SECRET,
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    server_metadata_url=CONF_URL,
     client_kwargs={"scope": "openid email profile"},
 )
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return render("login.html", request)
+    erro_codigo = request.query_params.get("erro")
+    mensagens = {
+        "google_nao_configurado": "O login com Google ainda não está configurado. Use email e senha.",
+        "email_indisponivel": "Não foi possível obter o email da sua conta Google.",
+        "acesso_negado": "Acesso negado ao login com Google.",
+        "erro_oauth": "Não foi possível concluir o login com Google. Tente novamente.",
+    }
+    erro = mensagens.get(erro_codigo) if erro_codigo else None
+    return render("login.html", request, erro=erro)
 
 
 @router.get("/registro", response_class=HTMLResponse)
@@ -114,8 +124,13 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         return RedirectResponse(url="/login?erro=google_nao_configurado", status_code=303)
 
-    token = await oauth.google.authorize_access_token(request)
-    userinfo = token.get("userinfo") or await oauth.google.userinfo(token)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        userinfo = token.get("userinfo") or await oauth.google.userinfo(token)
+    except Exception:
+        # Falha na troca de token/obtenção de userinfo (state inválido, token ausente, etc.)
+        return RedirectResponse(url="/login?erro=erro_oauth", status_code=303)
+
     email = userinfo.get("email")
     if not email:
         return RedirectResponse(url="/login?erro=email_indisponivel", status_code=303)
