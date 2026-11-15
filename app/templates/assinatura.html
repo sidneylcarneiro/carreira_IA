@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Assinatura & Saldo{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-800 mb-1">Assinatura &amp; Saldo</h1>
+    <p class="text-sm text-gray-500 mb-6">Acompanhe seus créditos e recarregue quando precisar.</p>
+
+    <!-- Cartões de saldo dos 3 tipos de créditos -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-5 border-l-4 border-blue-500">
+            <p class="text-sm font-medium text-gray-500">Créditos de Vaga</p>
+            <p class="text-3xl font-bold text-blue-600 mt-1">{{ usuario.creditos_vaga }}</p>
+            <p class="text-xs text-gray-400 mt-2">Usado para analisar vagas</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-5 border-l-4 border-green-500">
+            <p class="text-sm font-medium text-gray-500">Créditos de Currículo</p>
+            <p class="text-3xl font-bold text-green-600 mt-1">{{ usuario.creditos_curriculo }}</p>
+            <p class="text-xs text-gray-400 mt-2">Usado para estruturar currículos</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-5 border-l-4 border-purple-500">
+            <p class="text-sm font-medium text-gray-500">Créditos de Adaptação</p>
+            <p class="text-3xl font-bold text-purple-600 mt-1">{{ usuario.creditos_adaptacao }}</p>
+            <p class="text-xs text-gray-400 mt-2">Usado para adaptar currículos</p>
+        </div>
+    </div>
+
+    <!-- Destaque para comprar créditos -->
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Precisa de mais créditos?</h2>
+        <p class="text-sm text-gray-500 mb-4">Compre um pacote de créditos e continue usando a plataforma.</p>
+        <button
+            type="button"
+            class="inline-flex items-center justify-center bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
+        >
+            Comprar +10 Créditos por R$ 10,00
+        </button>
+    </div>
+</div>
+{% endblock %}

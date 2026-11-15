@@ -13,7 +13,7 @@ from app.dependencies import get_db, get_current_user, NotAuthenticatedError
 from app.services.deepseek_service import analisar_vaga_com_ia, estruturar_curriculo_base, adaptar_curriculo
 from app.services.scraper_service import extrair_texto_da_url, ScraperError
 from app.services.file_service import extrair_texto_de_arquivo
-from app.routers import auth
+from app.routers import auth, perfil
 
 app = FastAPI(title="Gestão de Carreira e ATS", version="2.0.0")
 
@@ -33,6 +33,9 @@ env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 # Registrando as rotas de autenticação
 app.include_router(auth.router)
+
+# Registrando as rotas de gestão da conta (perfil, assinatura e segurança)
+app.include_router(perfil.router)
 
 
 @app.exception_handler(NotAuthenticatedError)
