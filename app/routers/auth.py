@@ -127,9 +127,9 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
     try:
         token = await oauth.google.authorize_access_token(request)
         userinfo = token.get("userinfo") or await oauth.google.userinfo(token)
-    except Exception:
-        # Falha na troca de token/obtenção de userinfo (state inválido, token ausente, etc.)
-        return RedirectResponse(url="/login?erro=erro_oauth", status_code=303)
+    except Exception as e:
+        # Debug: expõe o erro real do OAuth na tela (sem redirecionar) para investigação
+        return {"erro_real": str(e), "tipo_do_erro": str(type(e))}
 
     email = userinfo.get("email")
     if not email:
