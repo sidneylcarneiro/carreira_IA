@@ -52,7 +52,7 @@ def _badge_html(status: str, vaga_id: int) -> str:
     cor = ETAPAS_COR.get(status, "bg-gray-100 text-gray-700")
     return (
         f'<a href="/kanban" title="Ver no Quadro Kanban" '
-        f'class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium {cor}">'
+        f'class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md {cor}">'
         f"{label}</a>"
     )
 

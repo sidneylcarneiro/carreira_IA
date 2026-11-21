@@ -1,19 +1,36 @@
 <!-- adaptacao_resultado.html -->
 {% if sucesso %}
-<!-- Fragmento substitui a célula de ações (#acao-<vaga_id>) via hx-swap=innerHTML.
-     O container pai já é flex, então devolvemos os botões como filhos diretos,
-     exatamente como o dashboard.html renderiza quando a adaptação já existe. -->
-<a href="/vagas/{{ vaga.id }}" class="inline-block bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">
-    Ver Análise
+<!-- Fragmento substitui o conteúdo da célula de ações (#acao-<vaga_id>) via hx-swap=innerHTML.
+     O container pai (#acao-<id>) já é flex, então devolvemos os botões como filhos diretos,
+     com as MESMAS classes compactas usadas no dashboard.html para não mudar o layout após o swap. -->
+<a href="/vagas/{{ vaga.id }}"
+   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+    </svg>
+    Análise
 </a>
-<a href="/adaptacao/{{ adaptacao.id }}" class="inline-block bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">
-    Visualizar
+<a href="/adaptacao/{{ adaptacao.id }}"
+   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+    </svg>
+    Ver CV
 </a>
-<a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
+<a href="/baixar-adaptacao/{{ adaptacao.id }}"
+   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+    </svg>
     Baixar
 </a>
 {% if vaga.url_original %}
-    <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" class="inline-block text-blue-600 hover:underline text-sm">
+    <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" title="Vaga original"
+       class="inline-flex items-center gap-1 whitespace-nowrap text-xs text-blue-600 hover:underline">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+        </svg>
         Vaga original
     </a>
 {% endif %}

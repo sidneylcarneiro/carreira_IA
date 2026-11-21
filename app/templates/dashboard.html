@@ -1,82 +1,114 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="bg-white rounded-lg shadow-md p-6">
+<div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
     <h1 class="text-2xl font-bold text-gray-800 mb-4">Dashboard de Vagas</h1>
 
     {% if vagas %}
-    <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
-            <thead class="bg-gray-100 text-gray-700">
-                <tr>
-                    <th class="px-4 py-2">Empresa</th>
-                    <th class="px-4 py-2">Título</th>
-                    <th class="px-4 py-2">Data</th>
-                    <th class="px-4 py-2">Etapa / Kanban</th>
-                    <th class="px-4 py-2">Ações</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for item in vagas %}
-                {% set vaga = item.vaga %}
-                {% set adaptacao = item.adaptacao %}
-                <tr>
-                    <td class="px-4 py-2">{{ vaga.vaga_data.vaga.empresa }}</td>
-                    <td class="px-4 py-2">{{ vaga.vaga_data.vaga.titulo_vaga }}</td>
-                    <td class="px-4 py-2">{{ vaga.data_criacao.strftime('%d/%m/%Y') if vaga.data_criacao else '-' }}</td>
-                    <td class="px-4 py-2">
-                        {% set kb_status = vaga.status_kanban %}
-                        {% if kb_status %}
-                            {% if kb_status == 'candidatado' %}{% set kb_cor = 'bg-blue-100 text-blue-700' %}
-                            {% elif kb_status == 'entrevista' %}{% set kb_cor = 'bg-amber-100 text-amber-700' %}
-                            {% elif kb_status == 'nao_selecionado' %}{% set kb_cor = 'bg-red-100 text-red-700' %}
-                            {% elif kb_status == 'contratado' %}{% set kb_cor = 'bg-green-100 text-green-700' %}
-                            {% else %}{% set kb_cor = 'bg-gray-100 text-gray-700' %}{% endif %}
-                            {% set kb_label = {'candidatado':'Candidatado','entrevista':'Entrevista','nao_selecionado':'Não Selecionado','contratado':'Contratado'}.get(kb_status, kb_status) %}
-                            <a href="/kanban" title="Ver no Quadro Kanban" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium {{ kb_cor }}">{{ kb_label }}</a>
-                        {% else %}
-                            <button
-                                hx-post="/kanban/adicionar/{{ vaga.id }}"
-                                hx-swap="outerHTML"
-                                class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700"
-                            >
-                                + Kanban
-                            </button>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-2">
-                        <div id="acao-{{ vaga.id }}" class="flex flex-wrap items-center gap-2">
-                            <a href="/vagas/{{ vaga.id }}" class="inline-block bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">
-                                Ver Análise
-                            </a>
-                            {% if adaptacao %}
-                                <a href="/adaptacao/{{ adaptacao.id }}" class="inline-block bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">
-                                    Visualizar
-                                </a>
-                                <a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
-                                    Baixar
-                                </a>
-                            {% else %}
-                                <button
-                                    hx-post="/gerar-adaptacao/{{ vaga.id }}"
-                                    hx-target="#acao-{{ vaga.id }}"
-                                    hx-swap="innerHTML"
-                                    class="bg-purple-600 text-white px-3 py-1.5 rounded-md hover:bg-purple-700"
-                                >
-                                    Gerar Currículo Ideal
-                                </button>
-                            {% endif %}
-                            {% if vaga.url_original %}
-                                <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" class="inline-block text-blue-600 hover:underline text-sm">
-                                    Vaga original
-                                </a>
-                            {% endif %}
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Cabeçalho visível apenas em desktop -->
+    <div class="hidden lg:grid lg:grid-cols-12 gap-3 px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold uppercase tracking-wide rounded-t-md">
+        <div class="lg:col-span-5">Vaga</div>
+        <div class="lg:col-span-2">Kanban</div>
+        <div class="lg:col-span-5 text-right">Ações</div>
+    </div>
+
+    <!-- Lista de vagas: card no mobile, linha alinhada no desktop -->
+    <div class="divide-y divide-gray-200">
+        {% for item in vagas %}
+        {% set vaga = item.vaga %}
+        {% set adaptacao = item.adaptacao %}
+        {% set dados = vaga.vaga_data.get('vaga') or {} %}
+        <div class="grid gap-3 lg:grid-cols-12 lg:items-center px-2 py-3 sm:px-4">
+
+            <!-- Coluna 1: Vaga -->
+            <div class="lg:col-span-5">
+                <a href="/vagas/{{ vaga.id }}" class="font-semibold text-gray-900 hover:text-blue-600 leading-snug">
+                    {{ dados.get('titulo_vaga') or 'Vaga sem título' }}
+                </a>
+                <div class="text-xs text-gray-500 mt-0.5">
+                    {{ dados.get('empresa') or 'Empresa não informada' }}
+                    <span class="mx-1 text-gray-300">•</span>
+                    {{ vaga.data_criacao.strftime('%d/%m/%Y') if vaga.data_criacao else '-' }}
+                </div>
+                {% if vaga.url_original %}
+                <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" title="Vaga original"
+                   class="inline-flex items-center gap-1 whitespace-nowrap text-xs text-blue-600 hover:underline mt-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    Vaga original
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Coluna 2: Kanban -->
+            <div class="lg:col-span-2">
+                {% set kb_status = vaga.status_kanban %}
+                {% if kb_status %}
+                    {% if kb_status == 'candidatado' %}{% set kb_cor = 'bg-blue-100 text-blue-700' %}
+                    {% elif kb_status == 'entrevista' %}{% set kb_cor = 'bg-amber-100 text-amber-700' %}
+                    {% elif kb_status == 'nao_selecionado' %}{% set kb_cor = 'bg-red-100 text-red-700' %}
+                    {% elif kb_status == 'contratado' %}{% set kb_cor = 'bg-green-100 text-green-700' %}
+                    {% else %}{% set kb_cor = 'bg-gray-100 text-gray-700' %}{% endif %}
+                    {% set kb_label = {'candidatado':'Candidatado','entrevista':'Entrevista','nao_selecionado':'Não Selecionado','contratado':'Contratado'}.get(kb_status, kb_status) %}
+                    <a href="/kanban" title="Ver no Quadro Kanban"
+                       class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md {{ kb_cor }}">
+                        {{ kb_label }}
+                    </a>
+                {% else %}
+                    <button
+                        hx-post="/kanban/adicionar/{{ vaga.id }}"
+                        hx-swap="outerHTML"
+                        class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Kanban
+                    </button>
+                {% endif %}
+            </div>
+<!-- Coluna 3: Ações (container #acao-<id> recebe o fragmento via HTMX) -->
+            <div id="acao-{{ vaga.id }}" class="lg:col-span-5 flex flex-wrap lg:flex-nowrap items-center gap-1.5 lg:justify-end">
+                <a href="/vagas/{{ vaga.id }}"
+                   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-gray-600 text-white hover:bg-gray-700">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Análise
+                </a>
+                {% if adaptacao %}
+                <a href="/adaptacao/{{ adaptacao.id }}"
+                   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Ver CV
+                </a>
+                <a href="/baixar-adaptacao/{{ adaptacao.id }}"
+                   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Baixar
+                </a>
+                {% else %}
+                <button
+                    hx-post="/gerar-adaptacao/{{ vaga.id }}"
+                    hx-target="#acao-{{ vaga.id }}"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-purple-600 text-white hover:bg-purple-700"
+                >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Gerar CV
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
     </div>
     {% else %}
     <p class="text-gray-500">
