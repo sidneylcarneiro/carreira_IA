@@ -1,4 +1,5 @@
 import os
+import logging
 from fastapi import FastAPI, Request, Form, Depends, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -15,10 +16,19 @@ from app.services.scraper_service import extrair_texto_da_url, ScraperError
 from app.services.file_service import extrair_texto_de_arquivo
 from app.routers import auth, perfil
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Gestão de Carreira e ATS", version="2.0.0")
 
-# Middleware de sessão (cookies) para gerenciar o usuário logado
-app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
+# Middleware de sessão (cookies) para gerenciar o usuário logado.
+# ATENÇÃO: o secret assina o cookie de sessão. Se ele mudar entre execuções, todos os cookies
+# antigos ficam ilegíveis e o OAuth do Google falha com MismatchingStateError.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET,
+    https_only=False,           # dev suporta http; use https_only=True somente atrás de HTTPS
+    same_site="lax",
+)
 
 # Definindo caminhos absolutos para evitar erros de diretório no Docker
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +57,12 @@ async def not_authenticated_handler(request: Request, exc: NotAuthenticatedError
 def startup():
     # Cria as tabelas caso ainda não existam
     Base.metadata.create_all(bind=engine)
+    if settings.SESSION_SECRET in ("dev-secret-key-change-me", "dev-secret-change-me"):
+        logger.warning(
+            "Usando SESSION_SECRET de desenvolvimento. Para que o login com Google funcione de "
+            "forma confiável, mantenha o MESMO valor de SESSION_SECRET entre todas as execuções "
+            "e processos (cookies antigos ficam inválidos quando o secret muda)."
+        )
 
 
 def render(template_name: str, request: Request, **context):
@@ -61,9 +77,15 @@ async def read_root(request: Request, usuario=Depends(get_current_user)):
 
 
 @app.get("/curriculo", response_class=HTMLResponse)
-async def curriculo_page(request: Request, usuario=Depends(get_current_user)):
-    """Renderiza a página de envio do currículo."""
-    return render("curriculo.html", request, usuario=usuario)
+async def curriculo_page(request: Request, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+    """Renderiza a página de envio do currículo, exibindo também o último currículo base salvo."""
+    curriculo_base = (
+        db.query(models.CurriculoBase)
+        .filter(models.CurriculoBase.id_usuario == usuario.id)
+        .order_by(models.CurriculoBase.id.desc())
+        .first()
+    )
+    return render("curriculo.html", request, usuario=usuario, curriculo_base=curriculo_base)
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -87,6 +109,24 @@ async def dashboard_page(request: Request, db: Session = Depends(get_db), usuari
         )
         lista.append({"vaga": vaga, "adaptacao": adaptacao})
     return render("dashboard.html", request, usuario=usuario, vagas=lista)
+
+
+@app.get("/vagas/{vaga_id}", response_class=HTMLResponse)
+async def vaga_detalhe(
+    vaga_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """Exibe os dados estruturados de uma vaga analisada (somente do próprio usuário)."""
+    vaga = (
+        db.query(models.VagaAnalisada)
+        .filter(models.VagaAnalisada.id == vaga_id, models.VagaAnalisada.id_usuario == usuario.id)
+        .first()
+    )
+    if not vaga:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada.")
+    return render("vaga_detalhe.html", request, usuario=usuario, vaga=vaga)
 
 
 @app.post("/analisar-vaga", response_class=HTMLResponse)
@@ -289,6 +329,24 @@ async def baixar_adaptacao(
             "Content-Disposition": f'attachment; filename="curriculo_adaptado_{adaptacao.id}.txt"'
         },
     )
+
+
+@app.get("/adaptacao/{adaptacao_id}", response_class=HTMLResponse)
+async def adaptacao_detalhe(
+    adaptacao_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """Exibe o currículo adaptado e a carta de apresentação (somente do próprio usuário)."""
+    adaptacao = (
+        db.query(models.CurriculoAdaptado)
+        .filter(models.CurriculoAdaptado.id == adaptacao_id, models.CurriculoAdaptado.id_usuario == usuario.id)
+        .first()
+    )
+    if not adaptacao:
+        raise HTTPException(status_code=404, detail="Adaptação não encontrada.")
+    return render("adaptacao_detalhe.html", request, usuario=usuario, adaptacao=adaptacao)
 
 
 def _formatar_curriculo_para_download(adaptacao: models.CurriculoAdaptado) -> str:

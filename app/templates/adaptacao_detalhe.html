@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Currículo Adaptado{% endblock %}
+{% block content %}
+{% set dados = adaptacao.curriculo_adaptado or {} %}
+
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Currículo Adaptado &amp; Carta de Apresentação</h1>
+        <div class="flex flex-wrap gap-2">
+            <a href="/dashboard" class="text-sm text-blue-600 hover:underline">&larr; Voltar ao dashboard</a>
+            <a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+                Baixar Currículo/Carta
+            </a>
+        </div>
+    </div>
+
+    <p class="text-xs text-gray-400 mb-6">
+        Gerado em {{ adaptacao.data_criacao.strftime('%d/%m/%Y às %H:%M') if adaptacao.data_criacao else '-' }}
+    </p>
+
+    <!-- Currículo Adaptado -->
+    <section class="border border-gray-200 rounded-lg p-5 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Currículo Adaptado</h2>
+
+        {% if dados.get('dados_pessoais') %}
+        <div class="mb-4">
+            {% set dp = dados['dados_pessoais'] %}
+            <p class="text-sm text-gray-700">
+                <strong>{{ dp.get('nome') or '' }}</strong>
+                {% if dp.get('localizacao') %} &mdash; {{ dp['localizacao'] }}{% endif %}
+            </p>
+            <p class="text-sm text-gray-600">
+                {% if dp.get('email') %}{{ dp['email'] }}{% endif %}
+                {% if dp.get('telefone') %} • {{ dp['telefone'] }}{% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        {% if dados.get('resumo_profissional') %}
+        <div class="mb-4">
+            <h3 class="font-medium text-gray-800 mb-1">Resumo Profissional</h3>
+            <p class="text-sm text-gray-700">{{ dados['resumo_profissional'] }}</p>
+        </div>
+        {% endif %}
+
+        {% if dados.get('experiencias') %}
+        <div class="mb-4">
+            <h3 class="font-medium text-gray-800 mb-2">Experiências</h3>
+            <ul class="space-y-3">
+                {% for exp in dados['experiencias'] %}
+                <li>
+                    <p class="text-sm font-medium text-gray-800">
+                        {{ exp.get('cargo') or '' }}
+                        {% if exp.get('empresa') %} @ {{ exp['empresa'] }}{% endif %}
+                        {% if exp.get('periodo') %}
+                        <span class="font-normal text-gray-500">({{ exp['periodo'] }})</span>
+                        {% endif %}
+                    </p>
+                    {% if exp.get('descricao_destacada') %}
+                    <p class="text-sm text-gray-600 mt-0.5">{{ exp['descricao_destacada'] }}</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if dados.get('educacao') %}
+        <div class="mb-4">
+            <h3 class="font-medium text-gray-800 mb-2">Formação</h3>
+            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                {% for edu in dados['educacao'] %}
+                <li>
+                    {{ edu.get('curso') or '' }}
+                    {% if edu.get('instituicao') %} &mdash; {{ edu['instituicao'] }}{% endif %}
+                    {% if edu.get('periodo') %}
+                    <span class="text-gray-500">({{ edu['periodo'] }})</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if dados.get('skills_destaque') %}
+        <div>
+            <h3 class="font-medium text-gray-800 mb-2">Skills em Destaque</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in dados['skills_destaque'] %}
+                <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Carta de Apresentação -->
+    <section class="border border-gray-200 rounded-lg p-5">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">Carta de Apresentação</h2>
+        <div class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-[600px] overflow-y-auto bg-gray-50 border border-gray-100 rounded-md p-4">
+            {{ adaptacao.carta_apresentacao or 'Carta não disponível.' }}
+        </div>
+    </section>
+</div>
+{% endblock %}

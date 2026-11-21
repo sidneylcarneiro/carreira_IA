@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Meu Currículo{% endblock %}
 {% block content %}
-<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">Envie seu Currículo</h1>
-    <p class="text-sm text-gray-600 mb-4">
+{% set curriculo = curriculo_base.curriculo_estruturado if curriculo_base else none %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Formulário de envio -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Envie seu Currículo</h1>
+        <p class="text-sm text-gray-600 mb-4">
         A IA vai extrair e estruturar seus dados pessoais, experiências, educação e skills.
         Você pode enviar um arquivo <strong>PDF, DOCX ou TXT</strong>, ou colar o texto do currículo.
     </p>
@@ -41,10 +44,103 @@
         >
             Estruturar Currículo com IA (1 crédito de currículo)
         </button>
-    </form>
+        </form>
 
-    <div id="resultado-curriculo" class="mt-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-        <p class="text-gray-500">O currículo estruturado aparecerá aqui após o envio.</p>
+        <div id="resultado-curriculo" class="mt-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+            <p class="text-gray-500">O currículo estruturado aparecerá aqui após o envio.</p>
+        </div>
+    </div>
+
+    <!-- Currículo base atual salvo no banco -->
+    <div>
+        {% if curriculo %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-1">Currículo Base Atual</h2>
+            <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2 mb-4">
+                ⚠️ Este é o currículo salvo no seu perfil. Ao enviar um novo currículo, ele
+                <strong>substituirá (atualizará)</strong> o atual e será usado nas próximas adaptações.
+            </p>
+
+            {% if curriculo.get('dados_pessoais') %}
+            <div class="mb-4">
+                {% set dp = curriculo['dados_pessoais'] %}
+                <p class="text-sm text-gray-700"><strong>{{ dp.get('nome') or '' }}</strong>
+                    {% if dp.get('telefone') %} &mdash; {{ dp['telefone'] }}{% endif %}
+                </p>
+                {% if dp.get('email') %}<p class="text-xs text-gray-500">{{ dp['email'] }}</p>{% endif %}
+                {% if dp.get('localizacao') %}<p class="text-xs text-gray-500">{{ dp['localizacao'] }}</p>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if curriculo.get('resumo_profissional') %}
+            <div class="mb-4">
+                <h3 class="font-medium text-gray-800 mb-1">Resumo</h3>
+                <p class="text-sm text-gray-600">{{ curriculo['resumo_profissional'] }}</p>
+            </div>
+            {% endif %}
+
+            {% if curriculo.get('experiencias') %}
+            <div class="mb-4">
+                <h3 class="font-medium text-gray-800 mb-2">Experiências</h3>
+                <ul class="space-y-2">
+                    {% for exp in curriculo['experiencias'] %}
+                    <li class="text-sm text-gray-600">
+                        <strong class="text-gray-800">{{ exp.get('cargo') or '' }}</strong>
+                        {% if exp.get('empresa') %} @ {{ exp['empresa'] }}{% endif %}
+                        {% if exp.get('periodo') %}
+                        <span class="text-gray-500">({{ exp['periodo'] }})</span>
+                        {% endif %}
+                        {% if exp.get('descricao') %}
+                        <p class="text-xs text-gray-500 mt-0.5">{{ exp['descricao'] }}</p>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if curriculo.get('educacao') %}
+            <div class="mb-4">
+                <h3 class="font-medium text-gray-800 mb-2">Formação</h3>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    {% for edu in curriculo['educacao'] %}
+                    <li>
+                        {{ edu.get('curso') or '' }}
+                        {% if edu.get('instituicao') %} &mdash; {{ edu['instituicao'] }}{% endif %}
+                        {% if edu.get('periodo') %}
+                        <span class="text-gray-500">({{ edu['periodo'] }})</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if curriculo.get('skills') %}
+            <div>
+                <h3 class="font-medium text-gray-800 mb-2">Skills</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for skill in curriculo['skills'] %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="mt-4 text-xs text-gray-400">
+                Salvo em {{ curriculo_base.data_criacao.strftime('%d/%m/%Y às %H:%M') if curriculo_base.data_criacao else '-' }}
+            </p>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Currículo Base Atual</h2>
+            <p class="text-sm text-gray-500">
+                Você ainda não possui um currículo estruturado salvo. Envie seu currículo ao lado para
+                que a IA extraia seus dados — eles ficarão salvos aqui e serão usados na geração de
+                currículos adaptados para as suas vagas.
+            </p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

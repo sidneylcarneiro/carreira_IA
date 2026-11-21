@@ -24,25 +24,31 @@
                     <td class="px-4 py-2">{{ vaga.vaga_data.vaga.titulo_vaga }}</td>
                     <td class="px-4 py-2">{{ vaga.data_criacao.strftime('%d/%m/%Y') if vaga.data_criacao else '-' }}</td>
                     <td class="px-4 py-2">
-                        <div id="acao-{{ vaga.id }}">
+                        <div id="acao-{{ vaga.id }}" class="flex flex-wrap items-center gap-2">
+                            <a href="/vagas/{{ vaga.id }}" class="inline-block bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">
+                                Ver Análise
+                            </a>
                             {% if adaptacao %}
-                                <a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
-                                    Baixar Currículo/Carta
+                                <a href="/adaptacao/{{ adaptacao.id }}" class="inline-block bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">
+                                    Visualizar
                                 </a>
-                                {% if vaga.url_original %}
-                                    <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" class="inline-block ml-2 text-blue-600 hover:underline">
-                                        Vaga original
-                                    </a>
-                                {% endif %}
+                                <a href="/baixar-adaptacao/{{ adaptacao.id }}" class="inline-block bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700">
+                                    Baixar
+                                </a>
                             {% else %}
                                 <button
                                     hx-post="/gerar-adaptacao/{{ vaga.id }}"
                                     hx-target="#acao-{{ vaga.id }}"
                                     hx-swap="innerHTML"
-                                    class="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700"
+                                    class="bg-purple-600 text-white px-3 py-1.5 rounded-md hover:bg-purple-700"
                                 >
                                     Gerar Currículo Ideal
                                 </button>
+                            {% endif %}
+                            {% if vaga.url_original %}
+                                <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" class="inline-block text-blue-600 hover:underline text-sm">
+                                    Vaga original
+                                </a>
                             {% endif %}
                         </div>
                     </td>

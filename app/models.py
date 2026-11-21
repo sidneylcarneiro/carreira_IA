@@ -9,6 +9,7 @@ class Usuario(Base):
     nome = Column(String(120), index=True)
     email = Column(String(120), unique=True, index=True)
     senha_hash = Column(String(255), nullable=True)  # nulo se for login social
+    telefone = Column(String, nullable=True)
     creditos_vaga = Column(Integer, default=10, nullable=False)
     creditos_curriculo = Column(Integer, default=10, nullable=False)
     creditos_adaptacao = Column(Integer, default=10, nullable=False)
