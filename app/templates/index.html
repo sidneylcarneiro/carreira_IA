@@ -1,8 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Analisar Vaga{% endblock %}
 {% block content %}
-<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-4">Análise de Vaga com IA</h1>
+<div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto" x-data="{ modalAjuda: false }" @keydown.escape.window="modalAjuda = false">
+    <div class="flex items-center gap-2 mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Análise de Vaga com IA</h1>
+        <!-- Botão de ajuda -->
+        <button
+            type="button"
+            @click="modalAjuda = true"
+            class="group relative flex items-center justify-center w-7 h-7 rounded-full border border-gray-300 text-gray-500 hover:text-blue-600 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            aria-label="Como copiar o HTML da vaga?"
+            title="Como copiar o HTML da vaga?"
+        >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 1113 8a3 3 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+            </svg>
+            <!-- Tooltip -->
+            <span class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] px-2 py-1 text-xs text-white bg-gray-800 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                Como copiar o HTML da vaga?
+            </span>
+        </button>
+    </div>
 
     <!-- Formulário para enviar a vaga -->
     <form
@@ -65,6 +83,65 @@
     <!-- Área onde o resultado será exibido -->
     <div id="resultado" class="mt-6 p-4 border border-gray-200 rounded-md bg-gray-50">
         <p class="text-gray-500">O resultado da análise aparecerá aqui após o envio.</p>
+    </div>
+</div>
+<!-- Modal de ajuda: como copiar o conteúdo completo da vaga -->
+<div
+    x-show="modalAjuda"
+    x-cloak
+    x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    @click.self="modalAjuda = false"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-modal-ajuda"
+>
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <!-- Cabeçalho -->
+        <div class="flex items-start justify-between gap-4 mb-4">
+            <h2 id="titulo-modal-ajuda" class="text-xl font-bold text-gray-800">
+                Como copiar o conteúdo completo da vaga
+            </h2>
+            <button
+                type="button"
+                @click="modalAjuda = false"
+                class="shrink-0 flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                aria-label="Fechar modal"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- GIF tutorial -->
+        <img
+            src="/static/img/tutorial-copiar-html.gif"
+            alt="Tutorial de como copiar o HTML da vaga"
+            class="w-full rounded-lg border border-gray-200 shadow-sm"
+        >
+
+        <!-- Resumo rápido em 4 passos -->
+        <div class="mt-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Resumo rápido em 4 passos:</h3>
+            <ol class="list-decimal list-inside space-y-1.5 text-sm text-gray-600">
+                <li>Clique com o botão direito na página da vaga e escolha <strong>Inspecionar</strong>;</li>
+                <li>Clique com o botão direito na tag <strong>&lt;html&gt;</strong> no topo;</li>
+                <li>Vá em <strong>Copiar &gt; Copiar elemento</strong>;</li>
+                <li><strong>Cole aqui</strong> na caixa de texto.</li>
+            </ol>
+        </div>
+
+        <!-- Botão de confirmação -->
+        <div class="mt-6 flex justify-end">
+            <button
+                type="button"
+                @click="modalAjuda = false"
+                class="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+                Entendi
+            </button>
+        </div>
     </div>
 </div>
 <script>
