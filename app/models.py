@@ -23,6 +23,10 @@ class VagaAnalisada(Base):
     vaga_data = Column(JSON)
     url_original = Column(String(500), nullable=True)
     texto_original = Column(Text, nullable=True)
+    # Etapa no quadro Kanban. Valores permitidos:
+    # "candidatado", "entrevista", "nao_selecionado", "contratado".
+    # None = fora do quadro (ainda não adicionada ao Kanban).
+    status_kanban = Column(String, nullable=True, default=None)
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -14,7 +14,7 @@ from app.dependencies import get_db, get_current_user, NotAuthenticatedError
 from app.services.deepseek_service import analisar_vaga_com_ia, estruturar_curriculo_base, adaptar_curriculo
 from app.services.scraper_service import extrair_texto_da_url, ScraperError
 from app.services.file_service import extrair_texto_de_arquivo
-from app.routers import auth, perfil
+from app.routers import auth, perfil, kanban
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,9 @@ app.include_router(auth.router)
 
 # Registrando as rotas de gestão da conta (perfil, assinatura e segurança)
 app.include_router(perfil.router)
+
+# Registrando as rotas do quadro Kanban
+app.include_router(kanban.router)
 
 
 @app.exception_handler(NotAuthenticatedError)

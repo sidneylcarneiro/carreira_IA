@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Quadro Kanban{% endblock %}
+{% block head %}
+<!-- SortableJS (drag & drop entre colunas) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+    .kanban-board { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+    .kanban-board::-webkit-scrollbar { height: 8px; }
+    .kanban-board::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .kanban-card { cursor: grab; }
+    .kanban-card:active { cursor: grabbing; }
+    .ghost-card { opacity: 0.4; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Quadro Kanban</h1>
+        <p class="text-sm text-gray-500">Gerencie a etapa de cada vaga candidatada. As vagas entram aqui a partir do Dashboard.</p>
+    </div>
+    <a href="/dashboard" class="inline-block bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm">Ir para o Dashboard</a>
+</div>
+
+<!-- Empty state (exibido quando o quadro não tem nenhuma vaga) -->
+<div id="kanban-empty" class="{{ '' if total == 0 else 'hidden' }}">
+    <div class="bg-white rounded-lg shadow-md border border-dashed border-gray-300 p-12 text-center">
+        <div class="mx-auto w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h6"></path>
+            </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Seu quadro ainda está vazio</h2>
+        <p class="text-gray-500 mb-6 max-w-md mx-auto">
+            O quadro Kanban começa vazio de propósito. Adicione as vagas que deseja acompanhar
+            manualmente pelo Dashboard, clicando em <strong>+ Kanban</strong> na coluna
+            "Etapa / Kanban".
+        </p>
+        <a href="/dashboard" class="inline-block bg-blue-600 text-white px-5 py-2.5 rounded-md hover:bg-blue-700">
+            Ir para o Dashboard
+        </a>
+    </div>
+</div>
+<!-- Board (exibido quando há vagas no quadro) -->
+<div id="kanban-board" class="{{ 'hidden' if total == 0 else '' }}">
+    <div class="kanban-board flex gap-4 overflow-x-auto pb-4 lg:grid lg:grid-cols-4 lg:overflow-visible">
+        {% for etapa in etapas %}
+        <div class="kanban-col flex flex-col min-w-[260px] lg:min-w-0 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <span class="font-semibold text-gray-700 text-sm">{{ etapas_label[etapa] }}</span>
+                <span id="count-{{ etapa }}" class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ por_etapa[etapa]|length }}</span>
+            </div>
+            <div id="list-{{ etapa }}" class="flex flex-col gap-3 p-3 min-h-[120px]">
+                {% for item in por_etapa[etapa] %}
+                {% set vaga = item.vaga %}
+                {% set adaptacao = item.adaptacao %}
+                {% set dados = vaga.vaga_data.get('vaga') or {} %}
+                <div id="card-{{ vaga.id }}" class="kanban-card bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-semibold text-gray-800 text-sm leading-snug">{{ dados.get('titulo_vaga') or 'Vaga sem título' }}</h3>
+                        <button
+                            type="button"
+                            onclick="removerVaga({{ vaga.id }})"
+                            title="Remover do quadro"
+                            class="text-gray-400 hover:text-red-600 shrink-0"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ dados.get('empresa') or 'Empresa não informada' }}</p>
+
+                    <!-- Select discreto para mudar de etapa (útil no celular) -->
+                    <div class="mt-2">
+                        <select
+                            class="kanban-select w-full text-xs border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            onchange="moveVaga({{ vaga.id }}, this.value)"
+                        >
+                            {% for op in etapas %}
+                            <option value="{{ op }}" {% if vaga.status_kanban == op %}selected{% endif %}>{{ etapas_label[op] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        <a href="/vagas/{{ vaga.id }}" class="text-xs bg-gray-600 text-white px-2.5 py-1 rounded hover:bg-gray-700">Ver Análise</a>
+                        {% if adaptacao %}
+                            <a href="/adaptacao/{{ adaptacao.id }}" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded hover:bg-blue-700">Currículo Adaptado</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<script>
+    // Mapeia o id da lista (list-{status}) para o valor da etapa
+    const ETAPAS = {{ etapas | tojson }};
+
+    function atualizarContadores() {
+        ETAPAS.forEach(function (etapa) {
+            const lista = document.getElementById('list-' + etapa);
+            const contador = document.getElementById('count-' + etapa);
+            if (lista && contador) {
+                contador.textContent = lista.children.length;
+            }
+        });
+        verificarVazio();
+    }
+
+    function verificarVazio() {
+        let total = 0;
+        ETAPAS.forEach(function (etapa) {
+            const lista = document.getElementById('list-' + etapa);
+            if (lista) total += lista.children.length;
+        });
+        const board = document.getElementById('kanban-board');
+        const empty = document.getElementById('kanban-empty');
+        if (board && empty) {
+            board.classList.toggle('hidden', total === 0);
+            empty.classList.toggle('hidden', total !== 0);
+        }
+    }
+
+    async function moveVaga(vagaId, novoStatus) {
+        const fd = new FormData();
+        fd.append('status', novoStatus);
+        try {
+            const res = await fetch('/kanban/mover/' + vagaId, { method: 'POST', body: fd });
+            if (!res.ok) {
+                console.error('Erro ao mover vaga', res.status);
+                return;
+            }
+            const card = document.getElementById('card-' + vagaId);
+            if (!card) return;
+            const sel = card.querySelector('.kanban-select');
+            if (sel) sel.value = novoStatus;
+            const destino = document.getElementById('list-' + novoStatus);
+            if (destino && card.parentElement !== destino) {
+                destino.appendChild(card);
+            }
+            atualizarContadores();
+        } catch (err) {
+            console.error('Erro ao mover vaga', err);
+        }
+    }
+
+    async function removerVaga(vagaId) {
+        if (!confirm('Remover esta vaga do quadro Kanban? Ela continuará no Dashboard.')) return;
+        try {
+            const res = await fetch('/kanban/remover/' + vagaId, { method: 'POST' });
+            if (!res.ok) return;
+            const card = document.getElementById('card-' + vagaId);
+            if (card) card.remove();
+            atualizarContadores();
+        } catch (err) {
+            console.error('Erro ao remover vaga', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.kanban-col').forEach(function (coluna) {
+            const listaId = coluna.querySelector('[id^="list-"]');
+            if (listaId) {
+                new Sortable(listaId, {
+                    group: 'kanban',
+                    animation: 150,
+                    ghostClass: 'ghost-card',
+                    onEnd: function (evt) {
+                        const status = evt.to.id.replace('list-', '');
+                        const vagaId = evt.item.id.replace('card-', '');
+                        const sel = evt.item.querySelector('.kanban-select');
+                        if (sel) sel.value = status;
+                        atualizarContadores();
+                        moveVaga(vagaId, status);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

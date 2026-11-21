@@ -12,6 +12,7 @@
                     <th class="px-4 py-2">Empresa</th>
                     <th class="px-4 py-2">Título</th>
                     <th class="px-4 py-2">Data</th>
+                    <th class="px-4 py-2">Etapa / Kanban</th>
                     <th class="px-4 py-2">Ações</th>
                 </tr>
             </thead>
@@ -23,6 +24,26 @@
                     <td class="px-4 py-2">{{ vaga.vaga_data.vaga.empresa }}</td>
                     <td class="px-4 py-2">{{ vaga.vaga_data.vaga.titulo_vaga }}</td>
                     <td class="px-4 py-2">{{ vaga.data_criacao.strftime('%d/%m/%Y') if vaga.data_criacao else '-' }}</td>
+                    <td class="px-4 py-2">
+                        {% set kb_status = vaga.status_kanban %}
+                        {% if kb_status %}
+                            {% if kb_status == 'candidatado' %}{% set kb_cor = 'bg-blue-100 text-blue-700' %}
+                            {% elif kb_status == 'entrevista' %}{% set kb_cor = 'bg-amber-100 text-amber-700' %}
+                            {% elif kb_status == 'nao_selecionado' %}{% set kb_cor = 'bg-red-100 text-red-700' %}
+                            {% elif kb_status == 'contratado' %}{% set kb_cor = 'bg-green-100 text-green-700' %}
+                            {% else %}{% set kb_cor = 'bg-gray-100 text-gray-700' %}{% endif %}
+                            {% set kb_label = {'candidatado':'Candidatado','entrevista':'Entrevista','nao_selecionado':'Não Selecionado','contratado':'Contratado'}.get(kb_status, kb_status) %}
+                            <a href="/kanban" title="Ver no Quadro Kanban" class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium {{ kb_cor }}">{{ kb_label }}</a>
+                        {% else %}
+                            <button
+                                hx-post="/kanban/adicionar/{{ vaga.id }}"
+                                hx-swap="outerHTML"
+                                class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700"
+                            >
+                                + Kanban
+                            </button>
+                        {% endif %}
+                    </td>
                     <td class="px-4 py-2">
                         <div id="acao-{{ vaga.id }}" class="flex flex-wrap items-center gap-2">
                             <a href="/vagas/{{ vaga.id }}" class="inline-block bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700">
