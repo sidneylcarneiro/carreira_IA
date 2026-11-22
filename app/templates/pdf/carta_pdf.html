@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Carta de Apresentação</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 22mm 20mm 22mm 20mm;
+            @bottom-center {
+                content: counter(page) " / " counter(pages);
+                font-family: 'DejaVu Sans', sans-serif;
+                font-size: 8pt;
+                color: #9ca3af;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 10.5pt;
+            color: #1f2937;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .cabecalho { border-bottom: 1.5pt solid #1d4ed8; padding-bottom: 8pt; margin-bottom: 22pt; }
+        .cabecalho .nome { font-size: 18pt; color: #111827; margin: 0 0 4pt 0; }
+        .cabecalho .contato { color: #4b5563; font-size: 9.5pt; }
+        .destinatario { margin-bottom: 16pt; }
+        .destinatario p { margin: 0 0 1pt 0; }
+        .destaque { color: #111827; font-weight: bold; }
+        .data { margin: 0 0 18pt 0; text-align: right; }
+        p.paragrafo { margin: 0 0 12pt 0; text-align: justify; white-space: pre-line; }
+        .saudacao { margin-bottom: 10pt; font-weight: bold; color: #111827; }
+        .assinatura { margin-top: 32pt; }
+        .assinatura .nome { font-weight: bold; color: #111827; }
+        .assinatura .contato { color: #4b5563; font-size: 9.5pt; }
+        .sem-conteudo { color: #9ca3af; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="cabecalho">
+        <h1 class="nome">{{ usuario.nome or 'Candidato(a)' }}</h1>
+        <div class="contato">
+            {% if usuario.email %}{{ usuario.email }}{% endif %}
+            {% if usuario.telefone %} • {{ usuario.telefone }}{% endif %}
+        </div>
+    </div>
+
+    <div class="destinatario">
+        <div class="destaque">Ao time de Recrutamento
+            {% if vaga.get('empresa') %}— {{ vaga.get('empresa') }}{% endif %}
+        </div>
+        {% if vaga.get('empresa') and vaga.get('titulo_vaga') %}
+        <p>Vaga: <span class="destaque">{{ vaga.get('titulo_vaga') }}</span></p>
+        {% elif vaga.get('titulo_vaga') %}
+        <p>Vaga: <span class="destaque">{{ vaga.get('titulo_vaga') }}</span></p>
+        {% endif %}
+    </div>
+
+    <p class="data">{{ data_atual }}</p>
+
+    {% if corpo_paragrafos %}
+        <p class="saudacao">Prezados(as),</p>
+        {% for p in corpo_paragrafos %}
+        <p class="paragrafo">{{ p }}</p>
+        {% endfor %}
+        <p class="saudacao">Atenciosamente,</p>
+    {% else %}
+        <p class="sem-conteudo">Carta de apresentação não disponível.</p>
+    {% endif %}
+
+    <div class="assinatura">
+        <div class="nome">{{ usuario.nome or 'Candidato(a)' }}</div>
+        <div class="contato">{{ usuario.email }}{% if usuario.telefone %} • {{ usuario.telefone }}{% endif %}</div>
+    </div>
+</body>
+</html>

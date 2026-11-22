@@ -14,6 +14,7 @@ from app.dependencies import get_db, get_current_user, NotAuthenticatedError
 from app.services.deepseek_service import analisar_vaga_com_ia, estruturar_curriculo_base, adaptar_curriculo
 from app.services.scraper_service import extrair_texto_da_url, ScraperError
 from app.services.file_service import extrair_texto_de_arquivo
+from app.services import pdf_service
 from app.routers import auth, perfil, kanban
 
 logger = logging.getLogger(__name__)
@@ -309,13 +310,48 @@ async def gerar_adaptacao(
                       vaga=vaga, mensagem=f"Erro ao gerar a adaptação: {str(e)}")
 
 
-@app.get("/baixar-adaptacao/{adaptacao_id}")
-async def baixar_adaptacao(
+@app.get("/baixar-curriculo/{adaptacao_id}")
+async def baixar_curriculo(
     adaptacao_id: int,
     db: Session = Depends(get_db),
     usuario=Depends(get_current_user),
 ):
-    """Gera um arquivo de texto com o currículo adaptado e a carta de apresentação."""
+    """Gera o PDF do currículo adaptado (somente para o próprio usuário)."""
+    adaptacao, vaga_data = _carregar_adaptacao_com_vaga(adaptacao_id, db, usuario)
+    pdf = pdf_service.gerar_pdf_curriculo(adaptacao.curriculo_adaptado, usuario, vaga_data)
+    nome_arquivo = pdf_service.nome_arquivo_curriculo(vaga_data)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nome_arquivo}"'},
+    )
+
+
+@app.get("/baixar-carta/{adaptacao_id}")
+async def baixar_carta(
+    adaptacao_id: int,
+    db: Session = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """Gera o PDF da carta de apresentação (somente para o próprio usuário)."""
+    adaptacao, vaga_data = _carregar_adaptacao_com_vaga(adaptacao_id, db, usuario)
+    pdf = pdf_service.gerar_pdf_carta(adaptacao.carta_apresentacao, usuario, vaga_data)
+    nome_arquivo = pdf_service.nome_arquivo_carta(vaga_data)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nome_arquivo}"'},
+    )
+
+
+@app.get("/baixar-adaptacao/{adaptacao_id}")
+async def baixar_adaptacao(adaptacao_id: int):
+    """Redireciona a rota antiga para o novo download do currículo em PDF."""
+    return RedirectResponse(url=f"/baixar-curriculo/{adaptacao_id}", status_code=307)
+
+
+def _carregar_adaptacao_com_vaga(adaptacao_id: int, db: Session, usuario):
+    """Busca a adaptação validando ownership e retorna (adaptacao, vaga_data)."""
     adaptacao = (
         db.query(models.CurriculoAdaptado)
         .filter(models.CurriculoAdaptado.id == adaptacao_id, models.CurriculoAdaptado.id_usuario == usuario.id)
@@ -324,14 +360,17 @@ async def baixar_adaptacao(
     if not adaptacao:
         raise HTTPException(status_code=404, detail="Adaptação não encontrada.")
 
-    conteudo = _formatar_curriculo_para_download(adaptacao)
-    return Response(
-        content=conteudo,
-        media_type="text/plain; charset=utf-8",
-        headers={
-            "Content-Disposition": f'attachment; filename="curriculo_adaptado_{adaptacao.id}.txt"'
-        },
-    )
+    vaga_data = {}
+    if adaptacao.id_vaga:
+        vaga = (
+            db.query(models.VagaAnalisada)
+            .filter(models.VagaAnalisada.id == adaptacao.id_vaga, models.VagaAnalisada.id_usuario == usuario.id)
+            .first()
+        )
+        if vaga:
+            vaga_data = vaga.vaga_data or {}
+    return adaptacao, vaga_data
+
 
 
 @app.get("/adaptacao/{adaptacao_id}", response_class=HTMLResponse)
@@ -351,51 +390,3 @@ async def adaptacao_detalhe(
         raise HTTPException(status_code=404, detail="Adaptação não encontrada.")
     return render("adaptacao_detalhe.html", request, usuario=usuario, adaptacao=adaptacao)
 
-
-def _formatar_curriculo_para_download(adaptacao: models.CurriculoAdaptado) -> str:
-    """Formata o currículo adaptado + carta de apresentação em texto puro para download."""
-    linhas = []
-    linhas.append("=" * 60)
-    linhas.append("CURRÍCULO ADAPTADO")
-    linhas.append("=" * 60)
-
-    dados = adaptacao.curriculo_adaptado or {}
-
-    if dados.get("dados_pessoais"):
-        for chave, valor in dados["dados_pessoais"].items():
-            if valor:
-                rotulo = chave.replace("_", " ").capitalize()
-                linhas.append(f"{rotulo}: {valor}")
-
-    if dados.get("resumo_profissional"):
-        linhas.append("\nRESUMO PROFISSIONAL:")
-        linhas.append(dados["resumo_profissional"])
-
-    if dados.get("experiencias"):
-        linhas.append("\nEXPERIÊNCIAS:")
-        for exp in dados["experiencias"]:
-            cargo = exp.get("cargo", "")
-            empresa = exp.get("empresa", "")
-            periodo = exp.get("periodo", "")
-            linhas.append(f"- {cargo} @ {empresa} ({periodo})")
-            if exp.get("descricao_destacada"):
-                linhas.append(f"  {exp['descricao_destacada']}")
-
-    if dados.get("educacao"):
-        linhas.append("\nEDUCAÇÃO:")
-        for edu in dados["educacao"]:
-            curso = edu.get("curso", "")
-            instituicao = edu.get("instituicao", "")
-            periodo = edu.get("periodo", "")
-            linhas.append(f"- {curso} - {instituicao} ({periodo})")
-
-    if dados.get("skills_destaque"):
-        linhas.append("\nSKILLS EM DESTAQUE:")
-        linhas.append(", ".join(dados["skills_destaque"]))
-
-    linhas.append("\n\n" + "=" * 60)
-    linhas.append("CARTA DE APRESENTAÇÃO")
-    linhas.append("=" * 60)
-    linhas.append(adaptacao.carta_apresentacao or "")
-
-    return "\n".join(linhas)

@@ -18,12 +18,19 @@
     </svg>
     Ver CV
 </a>
-<a href="/baixar-adaptacao/{{ adaptacao.id }}"
+<a href="/baixar-curriculo/{{ adaptacao.id }}"
    class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-700">
     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
     </svg>
-    Baixar
+    CV PDF
+</a>
+<a href="/baixar-carta/{{ adaptacao.id }}"
+   class="inline-flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-700 text-white hover:bg-green-800">
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+    </svg>
+    Carta PDF
 </a>
 {% if vaga.url_original %}
     <a href="{{ vaga.url_original }}" target="_blank" rel="noopener" title="Vaga original"
